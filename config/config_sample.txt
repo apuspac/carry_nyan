@@ -1,0 +1,4 @@
+cliend_id:
+access_token:
+broadcasterID:
+senderID:

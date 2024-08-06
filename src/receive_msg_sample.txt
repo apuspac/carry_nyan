@@ -1,0 +1,105 @@
+welcome message
+{
+  "metadata": {
+    "message_id": "052a38b9-1d7a-41cd-addc-7038f84d951c",
+    "message_type": "session_welcome",
+    "message_timestamp": "2024-08-04T09:14:12.637239015Z"
+  },
+  "payload": {
+    "session": {
+      "id": "AgoQ4pZ77gILR16vsByMLRHz7RIGY2VsbC1h",
+      "status": "connected",
+      "connected_at": "2024-08-04T09:14:12.633486345Z",
+      "keepalive_timeout_seconds": 10,
+      "reconnect_url": null,
+      "recovery_url": null
+    }
+  }
+}
+
+
+messageがあったときに受け取るやつ。
+{
+  "metadata": {
+    "message_id": "GvTGtM__NiXRs-hOXHcATmnmghFYLL3c0B2gEhK6ONA=",
+    "message_type": "notification",
+     "message_timestamp": "2024-08-05T11:49:04.112842642Z",
+    "subscription_type": "channel.chat.message",
+    "subscription_version": "1"
+  },
+  "payload": {
+    "subscription": {
+      "id": "52fdd7aa-c9bc-42e1-8940-0d521b9c849a",
+      "status": "enabled",
+      "type": "channel.chat.message",
+      "version": "1",
+      "condition": {
+        "broadcaster_user_id": "139776244",
+        "user_id": "139776244"
+      },
+      "transport": {
+        "method": "websocket",
+        "session_id": "AgoQnbsSk1VuRpKfCysoH6RIVhIGY2VsbC1h"
+      },
+      "created_at": "2024-08-05T11:48:52.627035829Z",
+      "cost": 0
+    },
+    "event": {
+      "broadcaster_user_id": "139776244",
+      "broadcaster_user_login": "37nui",
+      "broadcaster_user_name": "わたぬい",
+      "chatter_user_id": "139776244",
+      "chatter_user_login": "37nui",
+      "chatter_user_name": "わたぬい",
+      "message_id": "b34949df-8495-4fad-95d2-d165c3918104",
+      "message": {
+        "text": "あーあー テストテスト",
+        "fragments": [
+          {
+            "type": "text",
+            "text": "あーあー テストテスト",
+            "cheermote": null,
+            "emote": null,
+            "mention": null
+          }
+        ]
+      },
+      "color": "#16C6E6",
+      "badges": [
+        {
+          "set_id": "broadcaster",
+          "id": "1",
+          "info": ""
+        },
+        {
+          "set_id": "subscriber",
+          "id": "0",
+          "info": "1"
+        }
+      ],
+      "message_type": "text",
+      "cheer": null,
+      "reply": null,
+      "channel_points_custom_reward_id": null,
+      "channel_points_animation_id": null
+    }
+  }
+}
+
+
+
+
+これsessionが生きているときに受け取るやつ
+{
+  "metadata": {
+    "message_id": "1f30ee35-6abd-46d0-8908-5298329b03fd",
+    "message_type": "session_keepalive",
+    "message_timestamp": "2024-08-05T11:51:56.651865259Z"
+  },
+  "payload": {}
+}
+
+
+
+{{1f30ee35-6abd-46d0-8908-5298329b03fd session_keepalive 2024-08-05T11:51:56.651865259Z} {{   0 <nil> <nil>}}}
+
