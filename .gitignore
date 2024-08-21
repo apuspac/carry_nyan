@@ -31,3 +31,5 @@ go.work.sum
 # configfile 
 config/config.txt
 config/oauth_http.ts
+
+image/
