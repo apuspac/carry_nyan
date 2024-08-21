@@ -56,7 +56,6 @@ func render(conn *websocket.Conn){
             return
         }
     }
-
 }
 
 

@@ -83,6 +83,8 @@ type MessageFragment struct {
     Emote struct{
         Id string `json:"id"`
         EmoteSetId string `json:"emote_set_id"`
+        Owner_Id string `json:"owner_id"`
+        Format []string `json:"format"`
     }`json:"emote"`
     Mention struct{
         UserId string `json:"user_id"`
@@ -170,10 +172,21 @@ func chatCommand(ws *websocket.Conn, streamToken *StreamToken, msg string) {
     if msg == "!nya" {
         SendMessage(streamToken, "にゃーん")
     }
+    if msg == "!dis" {
+        SendAnnouncementes(streamToken, "announcement test", "blue")
+    }
 
 }
 
+func viewEmote(received Received) {
+    fmt.Println(received.Payload.Event.Message.Fragments[0].Emote.Id)
+    fmt.Println(received.Payload.Event.Message.Fragments[0].Emote.Format[0])
 
+    id := received.Payload.Event.Message.Fragments[0].Emote.Id
+    format := received.Payload.Event.Message.Fragments[0].Emote.Format[0]
+
+    SetEmoteUrl(id, format)
+}
 
 func handleSessionWelcome(ws *websocket.Conn, streamToken *StreamToken) {
     fmt.Println("Received Session Welcome")
@@ -181,10 +194,16 @@ func handleSessionWelcome(ws *websocket.Conn, streamToken *StreamToken) {
 }
 
 
+
 func handleNotification(ws *websocket.Conn, received Received, streamToken *StreamToken) {
     switch received.Metadata.Subscriptiontype {
     case "channel.chat.message":
         fmt.Println(received.Payload.Event.ChatterUserName, ": ", received.Payload.Event.Message.Text)
+
+        if received.Payload.Event.Message.Fragments[0].Emote.Id != "" {
+            viewEmote(received)
+        }
+
         if received.Payload.Event.Message.Text[0:1] == "!"{
             chatCommand(ws, streamToken, received.Payload.Event.Message.Text)
         }
@@ -247,18 +266,26 @@ func listenForMessages(ws *websocket.Conn, streamToken *StreamToken) {
 }
 
 
+
+
 func main() {
-    filePath := "../config/config.txt"
-    streamToken := setStreamToken(filePath)
-    
-    ws, _, err := websocket.DefaultDialer.Dial(wsUrl, http.Header{})
-    if err != nil {
-        log.Fatal(err)
-    }
 
-    defer ws.Close()
+    // filePath := "config/config.txt"
+    // streamToken := setStreamToken(filePath)
     
+    // ws, _, err := websocket.DefaultDialer.Dial(wsUrl, http.Header{})
+    // if err != nil {
+    //     log.Fatal(err)
+    // }
+    //
+    // defer ws.Close()
 
-    listenForMessages(ws, &streamToken)
+
+     // GetEmotes(&streamToken)
+    // SetEmoteUrl("emotesv2_e7a6e7e24a844e709c4d93c0845422e1", "static")
+
+
+    // listenForMessages(ws, &streamToken)
+    LaunchServerForOBS()
 }
 

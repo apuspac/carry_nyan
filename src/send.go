@@ -1,3 +1,4 @@
+// send.go
 package main
 
 
@@ -8,6 +9,60 @@ import (
     "net/http"
     "io/ioutil"
 )
+
+
+
+func GetEmotes(streamToken *StreamToken)error {
+    url := "https://api.twitch.tv/helix/chat/emotes/user?user_id=" + streamToken.SenderId
+
+    // jsonにしたpayloadをPOSTリクエストで送信
+    req, err := http.NewRequest("GET", url, nil)
+    if err != nil {
+        return err
+    }
+
+
+    // ヘッダーの定義
+    req.Header.Set("Authorization", "Bearer "+streamToken.AccsessToken)
+    req.Header.Set("Client-Id", streamToken.CliendId)
+
+    // ここ送信してるのかな？
+    // client := &http.Client{}
+    // resp, err := client.Do(req)
+    client := new(http.Client)
+    resp, _ := client.Do(req)
+
+    // check responce
+    if err != nil {
+        return err
+    }
+    defer resp.Body.Close()
+
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        fmt.Println("Error:", err)
+    }
+
+    // 3. JSONデータをデコードする
+    var jsonData map[string]interface{}
+    if err := json.Unmarshal(body, &jsonData); err != nil {
+        fmt.Println("Error:", err)
+    }
+
+    // 4. JSONデータを表示する
+    fmt.Println(jsonData)
+
+    fmt.Println("response Status:", resp.Status)
+
+
+    if resp.StatusCode != http.StatusOK {
+        return fmt.Errorf("failed to send message: %s", resp.Status)
+    }
+
+    return nil
+}
+
+
 
 
 func getUser(broadcasterID, senderID, message, token, clientID, get_user_id string) error {
@@ -156,12 +211,16 @@ func SendMessage(streamToken *StreamToken, msg string) error {
 }
 
 
-func SendAnnouncementes(streamToken *StreamToken, msg string) error {
+
+
+// Annoucementes形式で、POSTrequestを送信します。
+// colorは、blue, green, orange, purple primaryのいずれかを指定してください。
+func SendAnnouncementes(streamToken *StreamToken, msg, color string) error {
     url := "https://api.twitch.tv/helix/chat/announcements?broadcaster_id=" + streamToken.BroadcasterId+ "&moderator_id=" + streamToken.SenderId
 
     payload := map[string]string{
         "message": msg,
-        "color": "blue",
+        "color": color,
     }
     jsonData, err := json.Marshal(payload)
     if err != nil {
@@ -179,7 +238,6 @@ func SendAnnouncementes(streamToken *StreamToken, msg string) error {
     req.Header.Set("Client-Id", streamToken.CliendId)
     req.Header.Set("Content-Type", "application/json")
 
-    // ここ送信してるのかな？
     client := &http.Client{}
     resp, err := client.Do(req)
 
