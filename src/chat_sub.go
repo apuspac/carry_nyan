@@ -41,7 +41,7 @@ type Metadata struct {
 type Payload struct {
     Session Session `json:"session"`
     Subscription Subscription `json:"subscription"`
-    Event ChatMessageEvent `json:"event"`
+    Event Event`json:"event"`
 }
 
 type Session struct {
@@ -60,6 +60,8 @@ type Subscription struct {
     Version string `json:"version"`
 }
 
+type Event interface{}
+
 type ChatMessageEvent struct {
     BroadcasterUserID    string `json:"broadcaster_user_id"`
     BroadcasterUserLogin string `json:"broadcaster_user_login"`
@@ -74,7 +76,6 @@ type ChatMessageEvent struct {
     } `json:"message"`
     Color string `json:"color"`
 }
-
 
 type MessageFragment struct {
     Type string `json:"type"`
@@ -94,10 +95,32 @@ type MessageFragment struct {
     }`json:"mention"`
 }
 
+type CustomRewardRedemptionAddEvent struct {
+    Id string `json:"id"`
+    BroadcasterUserID    string `json:"broadcaster_user_id"`
+    BroadcasterUserLogin string `json:"broadcaster_user_login"`
+    BroadcasterUserName  string `json:"broadcaster_user_name"`
+    UserID        string `json:"user_id"`
+    UserLogin     string `json:"user_login"`
+    UserName      string `json:"user_name"`
+    UserInput     string `json:"user_input"`
+    Status        string `json:"status"`
+    Reward       struct{
+        Id      string `json:"id"`
+        Title   string `json:"title"`
+        Cost    int `json:"cost"`
+        Prompt  string `json:"prompt"`
+
+    }`json:"reward"`
+    RedeemedAt    string `json:"redeemed_at"`
+}
 
 
 
 
+
+
+// for create subscription
 type EventSubRequest struct {
     Type string `json:"type"`
     Version string `json:"version"`
@@ -123,10 +146,12 @@ func setStreamToken(filePath string) StreamToken{
 }
 
 
-func createSubscription(ws *websocket.Conn, streamToken *StreamToken)error {
+// twitchAPIとのsubscriptionを作成
+// event_sub_typeはここ。: https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types/
+func createSubscription(ws *websocket.Conn, streamToken *StreamToken, event_sub_type string)error {
     eventSubURL := "https://api.twitch.tv/helix/eventsub/subscriptions"
     reqBody := EventSubRequest{
-        Type:    "channel.chat.message",
+        Type:    event_sub_type,
         Version: "1",
         Condition: map[string]string{
             "broadcaster_user_id": streamToken.BroadcasterId,
@@ -171,22 +196,23 @@ func createSubscription(ws *websocket.Conn, streamToken *StreamToken)error {
 func chatCommand(ws *websocket.Conn, streamToken *StreamToken, msg string) {
     if msg == "!nya" {
         SendMessage(streamToken, "にゃーん")
+        GetChatters(streamToken)
     }
     if msg == "!dis" {
-        SendAnnouncementes(streamToken, "announcement test", "blue")
+        SendAnnouncementes(streamToken, "https://discord.gg/a7xsjJE2", "blue")
     }
 
 }
 
-func viewEmote(received Received, frg_index int) {
-    fmt.Println(received.Payload.Event.Message.Fragments[frg_index].Emote.Id)
-    fmt.Println(received.Payload.Event.Message.Fragments[frg_index].Emote.Format[0])
+func viewEmote(received ChatMessageEvent, frg_index int) {
+    MessageFragment := received.Message.Fragments[frg_index]
+    fmt.Println(MessageFragment.Emote.Id)
+    fmt.Println(MessageFragment.Emote.Format[0])
 
-    id := received.Payload.Event.Message.Fragments[frg_index].Emote.Id
-    // format := received.Payload.Event.Message.Fragments[frg_index].Emote.Format[0]
+    id := MessageFragment.Emote.Id
     var format string
 
-    if len(received.Payload.Event.Message.Fragments[frg_index].Emote.Format) == 2 {
+    if len(MessageFragment.Emote.Format) == 2 {
         format = "animated"
     }else {
         format = "static"
@@ -194,38 +220,52 @@ func viewEmote(received Received, frg_index int) {
     SetEmoteUrl(id, format)
 }
 
+// subscriptionを確立させる
 func handleSessionWelcome(ws *websocket.Conn, streamToken *StreamToken) {
     fmt.Println("Received Session Welcome")
-    createSubscription(ws, streamToken)
+    createSubscription(ws, streamToken, "channel.chat.message")
+    createSubscription(ws, streamToken, "channel.channel_points_custom_reward_redemption.add")
 }
 
 
-
+// messageなどを受け取ったときの処理
 func handleNotification(ws *websocket.Conn, received Received, streamToken *StreamToken) {
     switch received.Metadata.Subscriptiontype {
     case "channel.chat.message":
-        fmt.Println(received.Payload.Event.ChatterUserName, ": ", received.Payload.Event.Message.Text)
+        var rcv_event ChatMessageEvent
+        eventData, _ := json.Marshal(received.Payload.Event)
+        json.Unmarshal(eventData, &rcv_event)
+        fmt.Println(rcv_event.ChatterUserName, ": ", rcv_event.Message.Text)
         // fmt.Println(received.Payload.Event.ChatterUserName, ": ", received.Payload.Event.Message.Fragments)
 
-        for index, msg_frag := range received.Payload.Event.Message.Fragments {
+        for index, msg_frag := range rcv_event.Message.Fragments {
             if msg_frag.Type == "emote" {
-                viewEmote(received, index)
+                viewEmote(rcv_event, index)
             }
         }
+
+        // godotなどに送信
+        MsgNotifyClients(rcv_event.ChatterUserName, rcv_event.Message.Text)
 
         // if received.Payload.Event.Message.Fragments[0].Emote.Id != "" {
         //     viewEmote(received)
         // }
 
-        if received.Payload.Event.Message.Text[0:1] == "!"{
-            chatCommand(ws, streamToken, received.Payload.Event.Message.Text)
+        if rcv_event.Message.Text[0:1] == "!"{
+            chatCommand(ws, streamToken, rcv_event.Message.Text)
         }
+
+    case "channel.channel_points_custom_reward_redemption.add":
+        var rcv_event CustomRewardRedemptionAddEvent
+        eventData, _ := json.Marshal(received.Payload.Event)
+        json.Unmarshal(eventData, &rcv_event)
+        fmt.Println(rcv_event)
     default:
         fmt.Println("Received Other Notification")
     }
 }
 
-
+// 接続が維持されているかが返ってきたときの処理
 func handleSessionKeepalive(ws *websocket.Conn) {
     // fmt.Println("Received Session Keepalive")
 }
@@ -243,7 +283,7 @@ func handleOtherMessage(ws *websocket.Conn, received Received) error{
 }
 
 
-// Listen for the messages
+// websocketからメッセージを受信
 func listenForMessages(ws *websocket.Conn, streamToken *StreamToken) {
     for {
         _, msg, err := ws.ReadMessage()
@@ -261,7 +301,7 @@ func listenForMessages(ws *websocket.Conn, streamToken *StreamToken) {
         }
 
 
-
+        // MetaDataに乗っかってくるmessagetypeによって処理分け。
         switch received.Metadata.MessageType {
         case "session_welcome":
             streamToken.SessionId = received.Payload.Session.ID
@@ -290,16 +330,13 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-
+    
+    // mainが終了されたら、実行される。
     defer ws.Close()
-
-
-     // GetEmotes(&streamToken)
-    // SetEmoteUrl("emotesv2_e7a6e7e24a844e709c4d93c0845422e1", "static")
-
 
     go listenForMessages(ws, &streamToken)
     go LaunchServerForOBS()
+    go LaunchServerForGodot()
 
     select {}
 }

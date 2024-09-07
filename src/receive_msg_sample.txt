@@ -110,3 +110,16 @@ messageがあったときに受け取るやつ。
     {text aaaaa  false {   []} {  }} 
     {emote wabisu2Chikin false {emotesv2_5c234e734e904befb0d7e936e4ea667d 417718633 658875893 [static]} {  }}
 ]}
+
+
+#### get_chatters sample
+map[data:
+[map
+[user_id:82474404 user_login:gamu_gtk user_name:gamu_gtk] 
+map[user_id:94332703 user_login:paulshadowsx user_name:paulshadowsx]
+pagination:map[] total:12]
+
+
+
+### channel points reward redemption
+{52c02d03-ef9b-4018-8924-2ac0fafe330b 139776244 37nui わたぬい 139776244 37nui わたぬい  unfulfilled {721186a3-9f36-43d7-9a19-14928135e21e Hydrate! 5 Nomenome} 2024-08-26T16:16:31.056405523Z}

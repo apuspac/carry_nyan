@@ -1,4 +1,5 @@
 // send.go
+// POSTとかGETとかを送るやつ
 package main
 
 
@@ -11,6 +12,48 @@ import (
 )
 
 
+func GetChatters(streamToken *StreamToken) error {
+    url := "https://api.twitch.tv/helix/chat/chatters?broadcaster_id=" + streamToken.BroadcasterId + "&moderator_id=" + streamToken.SenderId
+
+    req, err := http.NewRequest("GET", url, nil)
+    if err != nil {
+        return err
+    }
+
+    // ヘッダーの定義
+    req.Header.Set("Authorization", "Bearer "+ streamToken.AccsessToken)
+    req.Header.Set("Client-Id", streamToken.CliendId)
+
+    client := new(http.Client)
+    resp, err := client.Do(req)
+
+    // check responce
+    if err != nil {
+        return err
+    }
+    defer resp.Body.Close()
+
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        fmt.Println("Error:", err)
+    }
+
+    // 3. JSONデータをデコードする
+    var jsonData map[string]interface{}
+    if err := json.Unmarshal(body, &jsonData); err != nil {
+        fmt.Println("Error:", err)
+    }
+
+    // 4. JSONデータを表示する
+    fmt.Println(jsonData)
+    fmt.Println("response Status:", resp.Status)
+
+    if resp.StatusCode != http.StatusOK {
+        return fmt.Errorf("failed to send message: %s", resp.Status)
+    }
+
+    return nil
+}
 
 func GetEmotes(streamToken *StreamToken)error {
     url := "https://api.twitch.tv/helix/chat/emotes/user?user_id=" + streamToken.SenderId
@@ -26,9 +69,6 @@ func GetEmotes(streamToken *StreamToken)error {
     req.Header.Set("Authorization", "Bearer "+streamToken.AccsessToken)
     req.Header.Set("Client-Id", streamToken.CliendId)
 
-    // ここ送信してるのかな？
-    // client := &http.Client{}
-    // resp, err := client.Do(req)
     client := new(http.Client)
     resp, _ := client.Do(req)
 
@@ -63,109 +103,7 @@ func GetEmotes(streamToken *StreamToken)error {
 }
 
 
-
-
-func getUser(broadcasterID, senderID, message, token, clientID, get_user_id string) error {
-    url := "https://api.twitch.tv/helix/users?login=" + get_user_id
-
-    // jsonにしたpayloadをPOSTリクエストで送信
-    req, err := http.NewRequest("GET", url, nil)
-    if err != nil {
-        return err
-    }
-
-
-    // ヘッダーの定義
-    req.Header.Set("Authorization", "Bearer "+token)
-    req.Header.Set("Client-Id", clientID)
-
-    // ここ送信してるのかな？
-    // client := &http.Client{}
-    // resp, err := client.Do(req)
-    client := new(http.Client)
-    resp, _ := client.Do(req)
-
-    // check responce
-    if err != nil {
-        return err
-    }
-    defer resp.Body.Close()
-
-    body, err := ioutil.ReadAll(resp.Body)
-    if err != nil {
-        fmt.Println("Error:", err)
-    }
-
-    // 3. JSONデータをデコードする
-    var jsonData map[string]interface{}
-    if err := json.Unmarshal(body, &jsonData); err != nil {
-        fmt.Println("Error:", err)
-    }
-
-    // 4. JSONデータを表示する
-    fmt.Println(jsonData)
-
-    fmt.Println("response Status:", resp.Status)
-
-
-    if resp.StatusCode != http.StatusOK {
-        return fmt.Errorf("failed to send message: %s", resp.Status)
-    }
-
-    return nil
-}
-
-func getModeration(broadcasterID, senderID, message, token, clientID, get_user_id string) error {
-    url := "https://api.twitch.tv/helix/moderation/mopderators?broadcaster_id=" + broadcasterID
-
-    // jsonにしたpayloadをPOSTリクエストで送信
-    req, err := http.NewRequest("GET", url, nil)
-    if err != nil {
-        return err
-    }
-
-
-    // ヘッダーの定義
-    req.Header.Set("Authorization", "Bearer "+token)
-    req.Header.Set("Client-Id", clientID)
-
-    // ここ送信してるのかな？
-    // client := &http.Client{}
-    // resp, err := client.Do(req)
-    client := new(http.Client)
-    resp, _ := client.Do(req)
-
-    // check responce
-    if err != nil {
-        return err
-    }
-    defer resp.Body.Close()
-
-    body, err := ioutil.ReadAll(resp.Body)
-    if err != nil {
-        fmt.Println("Error:", err)
-    }
-
-    // 3. JSONデータをデコードする
-    var jsonData map[string]interface{}
-    if err := json.Unmarshal(body, &jsonData); err != nil {
-        fmt.Println("Error:", err)
-    }
-
-    // 4. JSONデータを表示する
-    fmt.Println(jsonData)
-
-    fmt.Println("response Status:", resp.Status)
-
-
-    if resp.StatusCode != http.StatusOK {
-        return fmt.Errorf("failed to send message: %s", resp.Status)
-    }
-
-    return nil
-}
-
-
+// Messageを送信します。
 func SendMessage(streamToken *StreamToken, msg string) error {
     url := "https://api.twitch.tv/helix/chat/messages"
 
@@ -258,31 +196,99 @@ func SendAnnouncementes(streamToken *StreamToken, msg, color string) error {
 }
 
 
-//
-// func main() {
-//     filePath := "../config/config.txt"
-//     var config map[string]string = make(map[string]string)
-//     config = Load_file(filePath)
-//
-//
-//     broadcasterID := config["broadcaster_id"]
-//     senderID := config["sender_id"]
-//     clientID := config["client_id"]
-//     token := config["access_token"]
-//     message := "aaahhh"
-//
-//     // err := sendMessage(broadcasterID, senderID, message, token, clientID)
-//     // err := getUser(broadcasterID, senderID, message, token, clientID, "carry_nyan")
-//     // err := getModeration(broadcasterID, senderID, message, token, clientID, "carry_nyan")
-//     err := sendAnnouncementes(broadcasterID, senderID, message, token, clientID )
-//     if err != nil {
-//         fmt.Println("Error sending message:", err)
-//     } else {
-//         fmt.Println("Message sent successfully")
-//     }
-//
-//     
-//
-//
-// }
-//
+func getUser(broadcasterID, senderID, message, token, clientID, get_user_id string) error {
+    url := "https://api.twitch.tv/helix/users?login=" + get_user_id
+
+    req, err := http.NewRequest("GET", url, nil)
+    if err != nil {
+        return err
+    }
+
+
+    // ヘッダーの定義
+    req.Header.Set("Authorization", "Bearer "+token)
+    req.Header.Set("Client-Id", clientID)
+
+    // ここ送信してるのかな？
+    client := new(http.Client)
+    resp, _ := client.Do(req)
+
+    // check responce
+    if err != nil {
+        return err
+    }
+    defer resp.Body.Close()
+
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        fmt.Println("Error:", err)
+    }
+
+    // 3. JSONデータをデコードする
+    var jsonData map[string]interface{}
+    if err := json.Unmarshal(body, &jsonData); err != nil {
+        fmt.Println("Error:", err)
+    }
+
+    // 4. JSONデータを表示する
+    fmt.Println(jsonData)
+
+    fmt.Println("response Status:", resp.Status)
+
+
+    if resp.StatusCode != http.StatusOK {
+        return fmt.Errorf("failed to send message: %s", resp.Status)
+    }
+
+    return nil
+}
+
+func getModeration(broadcasterID, senderID, message, token, clientID, get_user_id string) error {
+    url := "https://api.twitch.tv/helix/moderation/mopderators?broadcaster_id=" + broadcasterID
+
+    // jsonにしたpayloadをPOSTリクエストで送信
+    req, err := http.NewRequest("GET", url, nil)
+    if err != nil {
+        return err
+    }
+
+
+    // ヘッダーの定義
+    req.Header.Set("Authorization", "Bearer "+token)
+    req.Header.Set("Client-Id", clientID)
+
+    // ここ送信してるのかな？
+    // client := &http.Client{}
+    // resp, err := client.Do(req)
+    client := new(http.Client)
+    resp, _ := client.Do(req)
+
+    // check responce
+    if err != nil {
+        return err
+    }
+    defer resp.Body.Close()
+
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        fmt.Println("Error:", err)
+    }
+
+    // 3. JSONデータをデコードする
+    var jsonData map[string]interface{}
+    if err := json.Unmarshal(body, &jsonData); err != nil {
+        fmt.Println("Error:", err)
+    }
+
+    // 4. JSONデータを表示する
+    fmt.Println(jsonData)
+
+    fmt.Println("response Status:", resp.Status)
+
+
+    if resp.StatusCode != http.StatusOK {
+        return fmt.Errorf("failed to send message: %s", resp.Status)
+    }
+
+    return nil
+}

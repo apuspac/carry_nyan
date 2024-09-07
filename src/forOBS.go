@@ -6,10 +6,6 @@ import (
     "net/http"
     // "path/filepath"
     "github.com/gorilla/websocket"
-
-    // test
-    "math/rand"
-    "time"
     "fmt"
 )
 
@@ -20,38 +16,23 @@ var (
 )
 
 
-func getEmoteUrl() string {
+func GetEmoteUrl() string {
     return EmoteWebUrl
 }
 
 func SetEmoteUrl(id, format string) {
-    EmoteWebUrl = "https://static-cdn.jtvnw.net/emoticons/v2/" + id + "/" + format + "/light/2.0"
+    EmoteWebUrl = "https://static-cdn.jtvnw.net/emoticons/v2/" + id + "/" + format + "/light/4.0"
     notifyClients(EmoteWebUrl)
 }
-
-
 
 func LaunchServerForOBS(){
     http.HandleFunc("/ws", wsEndpoint)
     http.ListenAndServe(":3000", nil)
-
-    // wsUrl := "ws://localhost:3030/ws"
-    //
-    // conn, _, err := websocket.DefaultDialer.Dial(wsUrl, http.Header{})
-    //
-    // if err != nil {
-    //     log.Println("Error while upgrading connection:", err)
-    //     return
-    // }
-    // defer conn.Close()
-
-
-
 }
 
 
 
-
+// OBS用のbrawser sourceとのwebsocket
 func wsEndpoint(w http.ResponseWriter, r *http.Request) {
     fmt.Println("viewEmoteHandler")
     var upgrader = websocket.Upgrader{
@@ -83,18 +64,18 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 
 
     render(ws)
-    // ramdom_generate(ws)
 }
 
+// emoteのURLを送信
 func sendEmoteMessage(ws *websocket.Conn){
-    err := ws.WriteMessage(1, []byte(getEmoteUrl()))
+    err := ws.WriteMessage(1, []byte(GetEmoteUrl()))
     if err != nil{
         log.Println(err)
     }
 }
 
 
-// upgrader からのpointerを受け取る
+// websocketを受け取って、emoteのURLを返したり、遊ぶ。
 func render(conn *websocket.Conn){
     for {
         // read in a message
@@ -107,10 +88,7 @@ func render(conn *websocket.Conn){
         fmt.Println(string(p))
 
 
-        // ここでオウム返し
-
-        emoteUrl := getEmoteUrl()
-        // p = []byte(emoteUrl + " " + string(p))
+        emoteUrl := GetEmoteUrl()
         p = []byte(emoteUrl)
 
 
@@ -123,31 +101,7 @@ func render(conn *websocket.Conn){
 
 }
 
-
-func ramdom_generate(conn *websocket.Conn){
-    for {
-        fmt.Println("ramdom_generate")
-        // Generate a random number
-        rand.Seed(time.Now().UnixNano())
-        number := rand.Intn(100)
-
-        // Send the number to the React client
-        if err := conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%d", number))); err != nil {
-            log.Println("Error sending message:", err)
-            return
-        }
-
-        // Wait for a while before generating the next number
-        time.Sleep(5 * time.Second)
-    }
-
-}
-
-
-
-
-
-
+// emoteが更新されたら、すべてのclientに通知
 func notifyClients(meg string){
     for client := range clients {
         sendEmoteMessage(client)
@@ -162,7 +116,7 @@ func viewEmoteHandler(w http.ResponseWriter, r *http.Request) {
 
     // ここで、?url=を取得してて、
     // emoteUrl := r.URL.Query().Get("url")
-    emoteUrl := getEmoteUrl()
+    emoteUrl := GetEmoteUrl()
     if emoteUrl == "" {
         http.Error(w, "Missing image parameter", http.StatusBadRequest)
         return
