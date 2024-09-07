@@ -12,8 +12,8 @@ const htmlContent = `
     <title>Document</title>
   </head>
   <body>
-    <input type="text" id="chatInput" />
-    <button onclick="sendMessage()">Send</button>
+
+    <img id="dynamicImage" src="" alt="Image" width="500" height="500">
 
     <script>
         let socket = new WebSocket("ws://localhost:3000/ws");
@@ -23,6 +23,13 @@ const htmlContent = `
             console.log("Successfully Connected");
             socket.send("Hi From the Client!");
         };
+
+        socket.onmessage = (msg) => {
+            console.log("Message from Server: ", msg.data);
+            // imgタグのsrc属性を更新
+            const img = document.getElementById("dynamicImage");
+            img.src = msg.data;
+        }
 
         socket.onclose = (event) => {
             console.log("Socket Closed Connection: ", event);
@@ -45,6 +52,10 @@ const htmlContent = `
 </html>
 `;
 
+// <input type="text" id="chatInput" />
+// <button onclick="sendMessage()">Send</button>
+
+
 
 serve({
   port: 3030,
@@ -59,9 +70,7 @@ serve({
     });
 
   },
-
 });
 
 
 console.log("Server is running on http://localhost:3030");
-

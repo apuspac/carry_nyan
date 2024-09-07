@@ -178,13 +178,19 @@ func chatCommand(ws *websocket.Conn, streamToken *StreamToken, msg string) {
 
 }
 
-func viewEmote(received Received) {
-    fmt.Println(received.Payload.Event.Message.Fragments[0].Emote.Id)
-    fmt.Println(received.Payload.Event.Message.Fragments[0].Emote.Format[0])
+func viewEmote(received Received, frg_index int) {
+    fmt.Println(received.Payload.Event.Message.Fragments[frg_index].Emote.Id)
+    fmt.Println(received.Payload.Event.Message.Fragments[frg_index].Emote.Format[0])
 
-    id := received.Payload.Event.Message.Fragments[0].Emote.Id
-    format := received.Payload.Event.Message.Fragments[0].Emote.Format[0]
+    id := received.Payload.Event.Message.Fragments[frg_index].Emote.Id
+    // format := received.Payload.Event.Message.Fragments[frg_index].Emote.Format[0]
+    var format string
 
+    if len(received.Payload.Event.Message.Fragments[frg_index].Emote.Format) == 2 {
+        format = "animated"
+    }else {
+        format = "static"
+    }
     SetEmoteUrl(id, format)
 }
 
@@ -199,10 +205,17 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
     switch received.Metadata.Subscriptiontype {
     case "channel.chat.message":
         fmt.Println(received.Payload.Event.ChatterUserName, ": ", received.Payload.Event.Message.Text)
+        // fmt.Println(received.Payload.Event.ChatterUserName, ": ", received.Payload.Event.Message.Fragments)
 
-        if received.Payload.Event.Message.Fragments[0].Emote.Id != "" {
-            viewEmote(received)
+        for index, msg_frag := range received.Payload.Event.Message.Fragments {
+            if msg_frag.Type == "emote" {
+                viewEmote(received, index)
+            }
         }
+
+        // if received.Payload.Event.Message.Fragments[0].Emote.Id != "" {
+        //     viewEmote(received)
+        // }
 
         if received.Payload.Event.Message.Text[0:1] == "!"{
             chatCommand(ws, streamToken, received.Payload.Event.Message.Text)
@@ -270,22 +283,24 @@ func listenForMessages(ws *websocket.Conn, streamToken *StreamToken) {
 
 func main() {
 
-    // filePath := "config/config.txt"
-    // streamToken := setStreamToken(filePath)
+    filePath := "config/config.txt"
+    streamToken := setStreamToken(filePath)
     
-    // ws, _, err := websocket.DefaultDialer.Dial(wsUrl, http.Header{})
-    // if err != nil {
-    //     log.Fatal(err)
-    // }
-    //
-    // defer ws.Close()
+    ws, _, err := websocket.DefaultDialer.Dial(wsUrl, http.Header{})
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    defer ws.Close()
 
 
      // GetEmotes(&streamToken)
     // SetEmoteUrl("emotesv2_e7a6e7e24a844e709c4d93c0845422e1", "static")
 
 
-    // listenForMessages(ws, &streamToken)
-    LaunchServerForOBS()
+    go listenForMessages(ws, &streamToken)
+    go LaunchServerForOBS()
+
+    select {}
 }
 

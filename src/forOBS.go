@@ -14,9 +14,8 @@ import (
 )
 
 var (
-    // これ何してるの
     clients = make(map[*websocket.Conn]bool)
-    EmoteWebUrl string = "https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_d878fe2c4fe4463c8a6cdd5257d6a0ed/animated/light/2.0"
+    EmoteWebUrl string = "https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_d878fe2c4fe4463c8a6cdd5257d6a0ed/animated/light/4.0"
     upgrader = websocket.Upgrader{}
 )
 
@@ -27,7 +26,7 @@ func getEmoteUrl() string {
 
 func SetEmoteUrl(id, format string) {
     EmoteWebUrl = "https://static-cdn.jtvnw.net/emoticons/v2/" + id + "/" + format + "/light/2.0"
-    // notifyClients(EmoteWebUrl)
+    notifyClients(EmoteWebUrl)
 }
 
 
@@ -72,6 +71,10 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
     defer ws.Close()
 
 
+    clients[ws] = true
+    defer delete(clients, ws)
+
+
     log.Println("Client Connected")
     err = ws.WriteMessage(1, []byte("Hi Client!"))
     if err != nil{
@@ -79,8 +82,15 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
     }
 
 
-    // render(ws)
-    ramdom_generate(ws)
+    render(ws)
+    // ramdom_generate(ws)
+}
+
+func sendEmoteMessage(ws *websocket.Conn){
+    err := ws.WriteMessage(1, []byte(getEmoteUrl()))
+    if err != nil{
+        log.Println(err)
+    }
 }
 
 
@@ -97,10 +107,18 @@ func render(conn *websocket.Conn){
         fmt.Println(string(p))
 
 
+        // ここでオウム返し
+
+        emoteUrl := getEmoteUrl()
+        // p = []byte(emoteUrl + " " + string(p))
+        p = []byte(emoteUrl)
+
+
         if err := conn.WriteMessage(messageType, p); err != nil {
             log.Println(err)
             return
         }
+
     }
 
 }
@@ -131,6 +149,9 @@ func ramdom_generate(conn *websocket.Conn){
 
 
 func notifyClients(meg string){
+    for client := range clients {
+        sendEmoteMessage(client)
+    }
 
 }
 

@@ -103,3 +103,10 @@ messageがあったときに受け取るやつ。
 
 {{1f30ee35-6abd-46d0-8908-5298329b03fd session_keepalive 2024-08-05T11:51:56.651865259Z} {{   0 <nil> <nil>}}}
 
+
+
+{aaaaa wabisu2Chikin 
+[
+    {text aaaaa  false {   []} {  }} 
+    {emote wabisu2Chikin false {emotesv2_5c234e734e904befb0d7e936e4ea667d 417718633 658875893 [static]} {  }}
+]}
