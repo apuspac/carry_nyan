@@ -11,19 +11,9 @@ import (
 
 var (
     clients = make(map[*websocket.Conn]bool)
-    EmoteWebUrl string = "https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_d878fe2c4fe4463c8a6cdd5257d6a0ed/animated/light/4.0"
     upgrader = websocket.Upgrader{}
 )
 
-
-func GetEmoteUrl() string {
-    return EmoteWebUrl
-}
-
-func SetEmoteUrl(id, format string) {
-    EmoteWebUrl = "https://static-cdn.jtvnw.net/emoticons/v2/" + id + "/" + format + "/light/4.0"
-    notifyClients(EmoteWebUrl)
-}
 
 func LaunchServerForOBS(){
     http.HandleFunc("/ws", wsEndpoint)
@@ -63,7 +53,7 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
     }
 
 
-    render(ws)
+    websocket_wait(ws)
 }
 
 // emoteのURLを送信
@@ -76,7 +66,7 @@ func sendEmoteMessage(ws *websocket.Conn){
 
 
 // websocketを受け取って、emoteのURLを返したり、遊ぶ。
-func render(conn *websocket.Conn){
+func websocket_wait(conn *websocket.Conn){
     for {
         // read in a message
         messageType, p, err := conn.ReadMessage()

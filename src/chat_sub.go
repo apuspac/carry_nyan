@@ -116,8 +116,18 @@ type CustomRewardRedemptionAddEvent struct {
 }
 
 
+func setStreamToken(filePath string) StreamToken{
+    var config map[string]string = make(map[string]string)
+    config = Load_file(filePath)
+    var streamToken StreamToken
 
+    streamToken.AccsessToken = config["access_token"]
+    streamToken.CliendId = config["client_id"]
+    streamToken.BroadcasterId = config["broadcaster_id"]
+    streamToken.SenderId = config["sender_id"]
 
+    return streamToken
+}
 
 
 // for create subscription
@@ -131,19 +141,6 @@ type EventSubRequest struct {
     } `json:"transport"`
 }
 
-
-func setStreamToken(filePath string) StreamToken{
-    var config map[string]string = make(map[string]string)
-    config = Load_file(filePath)
-    var streamToken StreamToken
-
-    streamToken.AccsessToken = config["access_token"]
-    streamToken.CliendId = config["client_id"]
-    streamToken.BroadcasterId = config["broadcaster_id"]
-    streamToken.SenderId = config["sender_id"]
-
-    return streamToken
-}
 
 
 // twitchAPIとのsubscriptionを作成
@@ -193,18 +190,21 @@ func createSubscription(ws *websocket.Conn, streamToken *StreamToken, event_sub_
     return nil
 }
 
+// コマンド処理の実行。
+// 最初のメッセージが!はチャットコマンドとして扱う。
 func chatCommand(ws *websocket.Conn, streamToken *StreamToken, msg string) {
     if msg == "!nya" {
         SendMessage(streamToken, "にゃーん")
         GetChatters(streamToken)
     }
     if msg == "!dis" {
-        SendAnnouncementes(streamToken, "https://discord.gg/a7xsjJE2", "blue")
+        SendAnnouncementes(streamToken, "https://discord.gg/HZwVQXPPwM", "blue")
     }
 
 }
 
-func viewEmote(received ChatMessageEvent, frg_index int) {
+// jsonファイルから読みだして、emoteのURLをsetする
+func loadEmoteData(received ChatMessageEvent, frg_index int) {
     MessageFragment := received.Message.Fragments[frg_index]
     fmt.Println(MessageFragment.Emote.Id)
     fmt.Println(MessageFragment.Emote.Format[0])
@@ -232,33 +232,38 @@ func handleSessionWelcome(ws *websocket.Conn, streamToken *StreamToken) {
 func handleNotification(ws *websocket.Conn, received Received, streamToken *StreamToken) {
     switch received.Metadata.Subscriptiontype {
     case "channel.chat.message":
+        // EvnetのinterfaceでChatMessageEventの型を指定
         var rcv_event ChatMessageEvent
         eventData, _ := json.Marshal(received.Payload.Event)
+        
+        // rcv_eventに格納
         json.Unmarshal(eventData, &rcv_event)
         fmt.Println(rcv_event.ChatterUserName, ": ", rcv_event.Message.Text)
-        // fmt.Println(received.Payload.Event.ChatterUserName, ": ", received.Payload.Event.Message.Fragments)
 
+        // messageの中のemoteの分だけ、loadEmoteDataを呼び出す。
+        // emoteがないときは、すっとばされる。
         for index, msg_frag := range rcv_event.Message.Fragments {
             if msg_frag.Type == "emote" {
-                viewEmote(rcv_event, index)
+                loadEmoteData(rcv_event, index)
             }
         }
 
         // godotなどに送信
-        MsgNotifyClients(rcv_event.ChatterUserName, rcv_event.Message.Text)
+        MsgNotifyforGodot(rcv_event.ChatterUserName, rcv_event.Message.Text)
 
-        // if received.Payload.Event.Message.Fragments[0].Emote.Id != "" {
-        //     viewEmote(received)
-        // }
 
         if rcv_event.Message.Text[0:1] == "!"{
             chatCommand(ws, streamToken, rcv_event.Message.Text)
         }
 
+    // channel points引き換え
     case "channel.channel_points_custom_reward_redemption.add":
+        // Evnet interfaceでCustomRewardRedemptionAddEvnetの型を指定
         var rcv_event CustomRewardRedemptionAddEvent
         eventData, _ := json.Marshal(received.Payload.Event)
         json.Unmarshal(eventData, &rcv_event)
+
+        // まだ、printするだけ。
         fmt.Println(rcv_event)
     default:
         fmt.Println("Received Other Notification")

@@ -51,25 +51,12 @@ func godot_wsEndpoint(w http.ResponseWriter, r *http.Request) {
     }
 
 
-    godot_render(wsgo)
-}
-
-// emoteのURLを送信
-func sendMessageToGodot(ws *websocket.Conn, user, msg string){
-    // err := ws.WriteMessage(1, []byte(user + " " + msg))
-    // if err != nil{
-    //     log.Println(err)
-    // }
-    err := ws.WriteJSON(map[string]string {"user": user, "msg": msg})
-    if err != nil{
-        log.Println(err)
-    }
-
+    godot_communication(wsgo)
 }
 
 
-// websocket通信で、遊ぶ。
-func godot_render(conn *websocket.Conn){
+
+func godot_communication(conn *websocket.Conn){
     for {
         // read in a message
         messageType, p, err := conn.ReadMessage()
@@ -94,8 +81,21 @@ func godot_render(conn *websocket.Conn){
 
 }
 
-// emoteが更新されたら、すべてのclientに通知
-func MsgNotifyClients(user, msg string){
+
+
+// godotにmessageを乗っけたjsonを送る
+func sendMessageToGodot(ws *websocket.Conn, user, msg string){
+    err := ws.WriteJSON(map[string]string {"user": user, "msg": msg})
+    if err != nil{
+        log.Println(err)
+    }
+
+}
+
+
+
+// すべてのclientに通知(clientは一つだからこれ一つでよくないか？
+func MsgNotifyforGodot(user, msg string){
     for client := range clients {
         sendMessageToGodot(client, user, msg)
     }
