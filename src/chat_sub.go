@@ -245,6 +245,7 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
         for index, msg_frag := range rcv_event.Message.Fragments {
             if msg_frag.Type == "emote" {
                 loadEmoteData(rcv_event, index)
+                EmoteNotifyforGodot(rcv_event.ChatterUserName, rcv_event.Message.Text)
             }
         }
 

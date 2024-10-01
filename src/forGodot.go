@@ -92,6 +92,14 @@ func sendMessageToGodot(ws *websocket.Conn, user, msg string){
 
 }
 
+// godotにEmoteとuser名を乗っけたjsonを送る
+func sendEmoteUrlToGodot(ws *websocket.Conn, user string){
+    err := ws.WriteJSON(map[string]string {"user": user, "emote_url": GetEmoteUrlStatic()})
+    if err != nil{
+        log.Println(err)
+    }
+
+}
 
 
 // すべてのclientに通知(clientは一つだからこれ一つでよくないか？
@@ -101,4 +109,12 @@ func MsgNotifyforGodot(user, msg string){
     }
 
 }
+
+func EmoteNotifyforGodot(user, msg string){
+    for client := range clients {
+        sendEmoteUrlToGodot(client, user)
+    }
+
+}
+
 
