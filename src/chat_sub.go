@@ -7,6 +7,7 @@ import (
     "encoding/json"
     "net/http"
     "bytes"
+    "strings"
     // "time"
     // "io/ioutil"
 
@@ -249,6 +250,23 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
             }
         }
 
+        // check betterttv emote
+        for code, id:= range Replace_emote_list_ttv {
+            if strings.Contains(rcv_event.Message.Text, code) {
+                fmt.Println("Replace Emote: " + id)
+                SetTVEmoteUrl(id)
+                TVEmoteNotifyforGodot(rcv_event.ChatterUserName, rcv_event.Message.Text)
+            }
+        }
+
+        for code, id:= range Replace_emote_list_7tv {
+            if strings.Contains(rcv_event.Message.Text, code) {
+                fmt.Println("Replace Emote: " + id)
+                Set7TVEmoteUrl(id)
+                TV7EmoteNotifyforGodot(rcv_event.ChatterUserName, rcv_event.Message.Text)
+            }
+        }
+
         // godotなどに送信
         MsgNotifyforGodot(rcv_event.ChatterUserName, rcv_event.Message.Text)
 
@@ -266,6 +284,18 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
 
         // まだ、printするだけ。
         fmt.Println(rcv_event)
+
+        switch rcv_event.Reward.Title {
+        case "Hydrate!":
+            HydrateNotifyforGodot(rcv_event.UserName)
+        default:
+            fmt.Println("Received Other Reward")
+        }
+
+
+
+
+
     default:
         fmt.Println("Received Other Notification")
     }
@@ -336,6 +366,9 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
+    GetListBetterttvGlobal()
+    GetListBetterttvUser()
+    GetList7tvEmoteSets()
     
     // mainが終了されたら、実行される。
     defer ws.Close()

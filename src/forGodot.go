@@ -89,7 +89,6 @@ func sendMessageToGodot(ws *websocket.Conn, user, msg string){
     if err != nil{
         log.Println(err)
     }
-
 }
 
 // godotにEmoteとuser名を乗っけたjsonを送る
@@ -101,6 +100,29 @@ func sendEmoteUrlToGodot(ws *websocket.Conn, user string){
 
 }
 
+
+func sendEmoteTVUrlToGodot(ws *websocket.Conn, user string){
+    err := ws.WriteJSON(map[string]string {"user": user, "emote_url": GetEmoteTVUrl()})
+    if err != nil{
+        log.Println(err)
+    }
+
+}
+
+func sendEmote7TVUrlToGodot(ws *websocket.Conn, user string){
+    err := ws.WriteJSON(map[string]string {"user": user, "emote_url": GetEmote7TVUrl()})
+    if err != nil{
+        log.Println(err)
+    }
+
+}
+
+func sendHydrateToGodot(ws *websocket.Conn, user string){
+    err := ws.WriteJSON(map[string]string {"user": user, "hydrate": "hydrate"})
+    if err != nil{
+        log.Println(err)
+    }
+}
 
 // すべてのclientに通知(clientは一つだからこれ一つでよくないか？
 func MsgNotifyforGodot(user, msg string){
@@ -114,7 +136,23 @@ func EmoteNotifyforGodot(user, msg string){
     for client := range clients {
         sendEmoteUrlToGodot(client, user)
     }
+}
 
+func TVEmoteNotifyforGodot(user, msg string){
+    for client := range clients {
+        sendEmoteTVUrlToGodot(client, user)
+    }
+}
+
+func TV7EmoteNotifyforGodot(user, msg string){
+    for client := range clients {
+        sendEmote7TVUrlToGodot(client, user)
+    }
 }
 
 
+func HydrateNotifyforGodot(user string){
+    for client := range clients {
+        sendHydrateToGodot(client, user)
+    }
+}
