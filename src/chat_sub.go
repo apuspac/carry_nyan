@@ -218,7 +218,7 @@ func loadEmoteData(received ChatMessageEvent, frg_index int) {
     }else {
         format = "static"
     }
-    SetEmoteUrl(id, format)
+    SetEmoteUrl(id, format, "twitch")
 }
 
 // subscriptionを確立させる
@@ -255,6 +255,7 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
             if strings.Contains(rcv_event.Message.Text, code) {
                 fmt.Println("Replace Emote: " + id)
                 SetTVEmoteUrl(id)
+                SetEmoteUrl(id, "static", "betterttv")
                 TVEmoteNotifyforGodot(rcv_event.ChatterUserName, rcv_event.Message.Text)
 
                 rcv_event.Message.Text = strings.ReplaceAll(rcv_event.Message.Text, code, "")
@@ -266,6 +267,7 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
                 fmt.Println("Replace Emote: " + id)
 
                 Set7TVEmoteUrl(id)
+                SetEmoteUrl(id, "static", "7tv")
                 TV7EmoteNotifyforGodot(rcv_event.ChatterUserName)
 
                 rcv_event.Message.Text = strings.ReplaceAll(rcv_event.Message.Text, code, "")
@@ -278,6 +280,8 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
 
         // godotなどに送信
         MsgNotifyforGodot(rcv_event.ChatterUserName, rcv_event.Message.Text)
+        EmoteNotifyforGodot(rcv_event.ChatterUserName)
+        ClearEmoteArray()
 
 
         if rcv_event.Message.Text[0:1] == "!"{

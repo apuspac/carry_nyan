@@ -10,7 +10,7 @@ import (
 )
 
 var (
-    clients = make(map[*websocket.Conn]bool)
+    Clients = make(map[*websocket.Conn]bool)
     upgrader = websocket.Upgrader{}
 )
 
@@ -42,8 +42,8 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
     defer ws.Close()
 
 
-    clients[ws] = true
-    defer delete(clients, ws)
+    Clients[ws] = true
+    defer delete(Clients, ws)
 
 
     log.Println("Client Connected")
@@ -93,7 +93,7 @@ func websocket_wait(conn *websocket.Conn){
 
 // emoteが更新されたら、すべてのclientに通知
 func notifyClients(meg string){
-    for client := range clients {
+    for client := range Clients {
         sendEmoteMessage(client)
     }
 

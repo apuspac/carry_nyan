@@ -17,7 +17,10 @@ var (
     EmoteTVUrl string = "https://cdn.betterttv.net/emote/5ba6d5ba6ee0c23989d52b10/3x"
     Emote7TVUrl string = "https://cdn.7tv.app/emote/63a2d49d7ace4044b8d02681/4x.gif"
 
-    EmoteArray []string
+    // mapじゃなくて、string二つの配列で良い気がする。
+    // 辞書型とは違うと思うし。
+    // 次ここから。
+    EmoteArray = make(map[string]string)
 )
 
 func GetEmoteUrl() string {
@@ -36,28 +39,28 @@ func GetEmoteTVUrl() string {
     return EmoteTVUrl
 }
 
-func SetEmoteUrl(id, format string) {
-    EmoteWebUrlStatic = "https://static-cdn.jtvnw.net/emoticons/v2/" + id + "/" + "static" + "/light/4.0"
+func SetEmoteUrl(id, format, platform string) {
+    var emoteWebUrl string
 
-    if format == "animated" {
-        EmoteWebUrlAnimated = "https://static-cdn.jtvnw.net/emoticons/v2/" + id + "/" + "animated" + "/light/4.0"
-    }else {
-        EmoteWebUrlAnimated = ""
+    switch platform {
+    case "twitch":
+        emoteWebUrl = "https://static-cdn.jtvnw.net/emoticons/v2/" + id + "/" + "static" + "/light/4.0"
 
+        if format == "animated" {
+            emoteWebUrl = "https://static-cdn.jtvnw.net/emoticons/v2/" + id + "/" + "animated" + "/light/4.0"
+        }
+    case "betterttv":
+        emoteWebUrl = "https://cdn.betterttv.net/emote/" + id + "/3x"
+
+    case "7tv":
+        emoteWebUrl = "https://cdn.7tv.app/emote/" + id + "/3x.gif"
     }
 
-    EmoteArray = append(EmoteArray, EmoteWebUrlStatic)
+
+
+    EmoteArray = append(EmoteArray, emoteWebUrl)
     // notifyClients(EmoteWebUrl)
 }
-
-func SetTVEmoteUrl(id string){
-    EmoteTVUrl = "https://cdn.betterttv.net/emote/" + id + "/3x"
-}
-
-func Set7TVEmoteUrl(id string){
-    Emote7TVUrl = "https://cdn.7tv.app/emote/" + id + "/3x.gif"
-}
-
 
 func GetEmote7TVUrl() string{
     return Emote7TVUrl
@@ -77,8 +80,7 @@ func _GetEmote7TVUrl() string {
 
 
 func ClearEmoteArray(){
-    EmoteArrayStatic = nil
-    EmoteArrayAnimated = nil
+    EmoteArray = nil
 }
 
 
@@ -98,6 +100,4 @@ func ServerforEmote(){
     if err := http.ListenAndServe(":8080", nil); err != nil {
         fmt.Println("Error starting server", err)
     }
-
-
 }

@@ -9,8 +9,7 @@ import (
 )
 
 var (
-    godotclients = make(map[*websocket.Conn]bool)
-    godot_websockets_upgrader = websocket.Upgrader{}
+    gows *websocket.Conn
 )
 
 
@@ -37,11 +36,8 @@ func godot_wsEndpoint(w http.ResponseWriter, r *http.Request) {
         log.Println(err)
     }
 
+    gows = wsgo
     defer wsgo.Close()
-
-
-    clients[wsgo] = true
-    defer delete(clients, wsgo)
 
 
     log.Println("Client Connected")
@@ -83,13 +79,6 @@ func godot_communication(conn *websocket.Conn){
 
 
 
-// godotにmessageを乗っけたjsonを送る
-func sendMessageToGodot(ws *websocket.Conn, user, msg string){
-    err := ws.WriteJSON(map[string]string {"user": user, "msg": msg})
-    if err != nil{
-        log.Println(err)
-    }
-}
 
 // godotにEmoteとuser名を乗っけたjsonを送る
 func sendEmoteUrlToGodot(ws *websocket.Conn, user string){
@@ -117,42 +106,27 @@ func sendEmote7TVUrlToGodot(ws *websocket.Conn, user string){
 
 }
 
-func sendHydrateToGodot(ws *websocket.Conn, user string){
-    err := ws.WriteJSON(map[string]string {"user": user, "hydrate": "hydrate"})
+
+
+// godotにmessageを乗っけたjsonを送る
+func MsgNotifyforGodot(user, msg string){
+    err := gows.WriteJSON(map[string]string {"user": user, "msg": msg})
     if err != nil{
         log.Println(err)
     }
 }
 
-// すべてのclientに通知(clientは一つだからこれ一つでよくないか？
-func MsgNotifyforGodot(user, msg string){
-    for client := range clients {
-        sendMessageToGodot(client, user, msg)
-    }
-
-}
-
-func EmoteNotifyforGodot(user, msg string){
-    for client := range clients {
-        sendEmoteUrlToGodot(client, user)
+func EmoteNotifyforGodot(user string){
+    // TODO: ここをarrayで送れるようにする
+    err := gows.WriteJSON(map[string]string {"user": user, "emote_url": GetEmoteUrl()})
+    if err != nil{
+        log.Println(err)
     }
 }
-
-func TVEmoteNotifyforGodot(user, msg string){
-    for client := range clients {
-        sendEmoteTVUrlToGodot(client, user)
-    }
-}
-
-func TV7EmoteNotifyforGodot(user string){
-    for client := range clients {
-        sendEmote7TVUrlToGodot(client, user)
-    }
-}
-
 
 func HydrateNotifyforGodot(user string){
-    for client := range clients {
-        sendHydrateToGodot(client, user)
+    err := gows.WriteJSON(map[string]string {"user": user, "hydrate": "hydrate"})
+    if err != nil{
+        log.Println(err)
     }
 }

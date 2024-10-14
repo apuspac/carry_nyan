@@ -1,15 +1,10 @@
 package main
 
 import (
-    // "log"
     "net/http"
-    // "path/filepath"
-    // "github.com/gorilla/websocket"
-    // "strings"
     "fmt"
     "io/ioutil"
     "encoding/json"
-    // "bytes"
 )
 
 type betterttv_global struct {
@@ -60,6 +55,7 @@ type tv7_emote struct {
 
 
 var (
+    // おい ここに書くんじゃありません。
     betterttv_user_id string = "139776244"
     tv7_user_id string = "6676d128ca58f5151ecd3b7e"
     tv7_emote_set_id string = "6676d198180087fd48c2a128"
@@ -161,8 +157,3 @@ func GetListBetterttvGlobal() {
         Replace_emote_list_ttv[emote.Code] = emote.Id
     }
 }
-
-// func main() {
-//     // fmt.Println(Replace_emote_list)
-// }
-
