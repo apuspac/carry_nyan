@@ -45,8 +45,8 @@ func GetChatters(streamToken *StreamToken) error {
     }
 
     // 4. JSONデータを表示する
-    // fmt.Println(jsonData)
-    // fmt.Println("response Status:", resp.Status)
+    fmt.Println(jsonData)
+    fmt.Println("response Status:", resp.Status)
 
     if resp.StatusCode != http.StatusOK {
         return fmt.Errorf("failed to send message: %s", resp.Status)

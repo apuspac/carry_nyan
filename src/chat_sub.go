@@ -256,15 +256,24 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
                 fmt.Println("Replace Emote: " + id)
                 SetTVEmoteUrl(id)
                 TVEmoteNotifyforGodot(rcv_event.ChatterUserName, rcv_event.Message.Text)
+
+                rcv_event.Message.Text = strings.ReplaceAll(rcv_event.Message.Text, code, "")
             }
         }
 
         for code, id:= range Replace_emote_list_7tv {
             if strings.Contains(rcv_event.Message.Text, code) {
                 fmt.Println("Replace Emote: " + id)
+
                 Set7TVEmoteUrl(id)
-                TV7EmoteNotifyforGodot(rcv_event.ChatterUserName, rcv_event.Message.Text)
+                TV7EmoteNotifyforGodot(rcv_event.ChatterUserName)
+
+                rcv_event.Message.Text = strings.ReplaceAll(rcv_event.Message.Text, code, "")
             }
+        }
+        
+        if len(rcv_event.Message.Text) == 0 {
+            break
         }
 
         // godotなどに送信
@@ -361,21 +370,27 @@ func main() {
 
     filePath := "config/config.txt"
     streamToken := setStreamToken(filePath)
+
+    // GetChatters(&streamToken)
     
     ws, _, err := websocket.DefaultDialer.Dial(wsUrl, http.Header{})
     if err != nil {
         log.Fatal(err)
     }
+
+    // getemote list 
     GetListBetterttvGlobal()
     GetListBetterttvUser()
     GetList7tvEmoteSets()
-    
+    GetEmote7TVUrl()
+
     // mainが終了されたら、実行される。
     defer ws.Close()
 
     go listenForMessages(ws, &streamToken)
     go LaunchServerForOBS()
     go LaunchServerForGodot()
+    go ServerforEmote()
 
     select {}
 }

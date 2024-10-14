@@ -100,6 +100,15 @@ func http_request_GET(url string, return_body *[]byte) error{
 
 }
 
+
+func Get7tvEmoteWebp (emote_url string, webpbyte *[]byte) {
+    url := emote_url
+
+    http_request_GET(url, webpbyte)
+}
+
+
+
 func GetList7tvEmoteSets() {
     url := "https://7tv.io/v3/emote-sets/" + tv7_emote_set_id
 
