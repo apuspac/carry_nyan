@@ -15,6 +15,7 @@ import (
 type Emote struct {
     Platform string
     Url string
+    Id string
 }
 
 var (
@@ -39,28 +40,44 @@ func GetEmoteUrl() []string {
     return emoteUrls
 }
 
+func GetEmoteId() []string {
+    var emoteUrls []string
+    for _, emote_id := range EmoteArray {
+        emoteUrls = append(emoteUrls, emote_id.Id)
+    }
 
-func SetEmoteUrl(id, format, platform string) {
+    return emoteUrls
+}
+
+
+
+func SetEmoteUrl(url_id, format, platform, emote_id string) {
     var emoteWebUrl string
 
     switch platform {
     case "twitch":
-        emoteWebUrl = "https://static-cdn.jtvnw.net/emoticons/v2/" + id + "/" + "static" + "/light/4.0"
+        emoteWebUrl = "https://static-cdn.jtvnw.net/emoticons/v2/" + url_id + "/" + "static" + "/light/4.0"
 
         if format == "animated" {
-            emoteWebUrl = "https://static-cdn.jtvnw.net/emoticons/v2/" + id + "/" + "animated" + "/light/4.0"
+            emoteWebUrl = "https://static-cdn.jtvnw.net/emoticons/v2/" + url_id + "/" + "animated" + "/light/4.0"
         }
     case "betterttv":
-        emoteWebUrl = "https://cdn.betterttv.net/emote/" + id + "/3x"
+        emoteWebUrl = "https://cdn.betterttv.net/emote/" + url_id + "/3x"
+        if format == "animated" {
+            emoteWebUrl = "https://cdn.betterttv.net/emote/" + url_id + "/3x"
+        }
 
     case "7tv":
-        emoteWebUrl = "https://cdn.7tv.app/emote/" + id + "/3x.gif"
+        emoteWebUrl = "https://cdn.7tv.app/emote/" + url_id + "/3x.png"
+
+        if format == "animated" {
+            emoteWebUrl = "https://cdn.7tv.app/emote/" + url_id + "/3x.gif"
+        }
     }
 
 
 
-    EmoteArray = append(EmoteArray, Emote{platform,emoteWebUrl})
-    // notifyClients(EmoteWebUrl)
+    EmoteArray = append(EmoteArray, Emote{platform,emoteWebUrl, emote_id})
 }
 
 

@@ -100,7 +100,7 @@ func godot_communication(conn *websocket.Conn){
         // print out that message
         log.Println("from godot " + string(p))
 
-        // testEmote()
+        testEmote()
 
 
         if err := conn.WriteMessage(messageType, p); err != nil {
@@ -124,10 +124,11 @@ func EmoteNotifyforGodot(user string){
     emoteJSON := EmoteJSON{
         User: user,
         EmoteUrl: GetEmoteUrl(),
+        EmoteId: GetEmoteId(),
     }
 
-    data := map[string]string {"user": emoteJSON.user , "emote_url": strings.Join(emoteJSON.emote_url, ",")}
-    // data := map[string]string {"user": testEmote.User, "emote_url": strings.Join(testEmote.EmoteUrl, ","), "emote_id": strings.Join(testEmote.EmoteId, ",")}
+    // data := map[string]string {"user": emoteJSON.user , "emote_url": strings.Join(emoteJSON.emote_url, ",")}
+    data := map[string]string {"user": emoteJSON.User, "emote_url": strings.Join(emoteJSON.EmoteUrl, ","), "emote_id": strings.Join(emoteJSON.EmoteId, ",")}
     
     if gows != nil{
         err := gows.WriteJSON(data)

@@ -51,6 +51,16 @@ type tv7_emote_sets struct {
 type tv7_emote struct {
     Id string `json:"id"`
     Code string `json:"name"`
+    Data struct{
+        Animated bool `json:"animated"`
+    } `json:"data"`
+}
+
+
+type NonTwitchEmote struct {
+    Code string 
+    Id string
+    Animated bool
 }
 
 
@@ -60,8 +70,8 @@ var (
     betterttv_user_id string = "139776244"
     tv7_user_id string = "6676d128ca58f5151ecd3b7e"
     tv7_emote_set_id string = "6676d198180087fd48c2a128"
-    Replace_emote_list_ttv map[string]string = make(map[string]string)
-    Replace_emote_list_7tv map[string]string = make(map[string]string)
+    Replace_emote_list_ttv []NonTwitchEmote
+    Replace_emote_list_7tv []NonTwitchEmote
 )
 
 
@@ -108,6 +118,23 @@ func Get7tvEmoteWebp (emote_url string, webpbyte *[]byte) {
 
 
 
+func GetList7tvEmoteSetsGlobal() {
+    url := "https://7tv.io/v3/emote-sets/global"
+
+    var body []byte
+    http_request_GET(url, &body)
+
+    var emoteData tv7_emote_sets
+    if err := json.Unmarshal(body, &emoteData); err != nil {
+        fmt.Println("Error:", err)
+    }
+
+    for _, emote := range emoteData.Emotes{
+        Replace_emote_list_7tv = append(Replace_emote_list_7tv, NonTwitchEmote{emote.Code, emote.Id, emote.Data.Animated})
+    }
+}
+
+
 func GetList7tvEmoteSets() {
     url := "https://7tv.io/v3/emote-sets/" + tv7_emote_set_id
 
@@ -120,7 +147,7 @@ func GetList7tvEmoteSets() {
     }
 
     for _, emote := range emoteData.Emotes{
-        Replace_emote_list_7tv[emote.Code] = emote.Id
+        Replace_emote_list_7tv = append(Replace_emote_list_7tv, NonTwitchEmote{emote.Code, emote.Id, emote.Data.Animated})
     }
 }
 
@@ -136,11 +163,11 @@ func GetListBetterttvUser() {
     }
 
     for _, emote := range emoteData.ChannelEmotes {
-        Replace_emote_list_ttv[emote.Code] = emote.Id
+        Replace_emote_list_ttv = append(Replace_emote_list_ttv, NonTwitchEmote{emote.Code, emote.Id, emote.Animated})
     }
 
     for _, emote := range emoteData.SharedEmotes {
-        Replace_emote_list_ttv[emote.Code] = emote.Id
+        Replace_emote_list_ttv = append(Replace_emote_list_ttv, NonTwitchEmote{emote.Code, emote.Id, emote.Animated})
     }
 }
 
@@ -157,6 +184,6 @@ func GetListBetterttvGlobal() {
     }
 
     for _, emote := range emoteData {
-        Replace_emote_list_ttv[emote.Code] = emote.Id
+        Replace_emote_list_ttv = append(Replace_emote_list_ttv, NonTwitchEmote{emote.Code, emote.Id, emote.Animated})
     }
 }

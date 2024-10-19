@@ -218,7 +218,7 @@ func loadEmoteData(received *ChatMessageEvent, frg_index int) {
     }else {
         format = "static"
     }
-    SetEmoteUrl(id, format, "twitch")
+    SetEmoteUrl(id, format, "twitch", MessageFragment.Text)
 
     // emoteの文字列削除
 }
@@ -259,28 +259,32 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
         }
 
         // check betterttv emote
-        for code, id:= range Replace_emote_list_ttv {
-            if strings.Contains(rcv_event.Message.Text, code) {
-                fmt.Println("Replace Emote: " + id)
+        for _, ttv_emote:= range Replace_emote_list_ttv {
+            if strings.Contains(rcv_event.Message.Text, ttv_emote.Code) {
+                fmt.Println("Replace Emote: " + ttv_emote.Id)
 
 
-                for range(strings.Count(rcv_event.Message.Text, code)) {
-                    SetEmoteUrl(id, "static", "betterttv")
+                for range(strings.Count(rcv_event.Message.Text, ttv_emote.Code)) {
+                    var format = "static"
+                    if ttv_emote.Animated { format = "animated" }
+                    SetEmoteUrl(ttv_emote.Id, format, "betterttv", ttv_emote.Code)
                 }
 
-                rcv_event.Message.Text = strings.ReplaceAll(rcv_event.Message.Text, code, "")
+                rcv_event.Message.Text = strings.ReplaceAll(rcv_event.Message.Text, ttv_emote.Code, "")
             }
         }
 
-        for code, id:= range Replace_emote_list_7tv {
-            if strings.Contains(rcv_event.Message.Text, code) {
-                fmt.Println("Replace Emote: " + id)
+        for _, tv7_emote := range Replace_emote_list_7tv {
+            if strings.Contains(rcv_event.Message.Text, tv7_emote.Code) {
+                fmt.Println("Replace Emote: " + tv7_emote.Id)
 
-                for range(strings.Count(rcv_event.Message.Text, code)) {
-                    SetEmoteUrl(id, "static", "7tv")
+                for range(strings.Count(rcv_event.Message.Text, tv7_emote.Code)) {
+                    var format = "static"
+                    if tv7_emote.Animated { format = "animated" }
+                    SetEmoteUrl(tv7_emote.Id, format, "7tv", tv7_emote.Code)
                 }
 
-                rcv_event.Message.Text = strings.ReplaceAll(rcv_event.Message.Text, code, "")
+                rcv_event.Message.Text = strings.ReplaceAll(rcv_event.Message.Text, tv7_emote.Code, "")
             }
         }
 
@@ -396,6 +400,7 @@ func main() {
     GetListBetterttvGlobal()
     GetListBetterttvUser()
     GetList7tvEmoteSets()
+    GetList7tvEmoteSetsGlobal()
 
     // mainが終了されたら、実行される。
     defer ws.Close()
