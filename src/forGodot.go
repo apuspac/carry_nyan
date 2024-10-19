@@ -1,11 +1,15 @@
 package main
 
 import (
+    // "encoding/json"
+    "strings"
     "log"
     "net/http"
+
     // "path/filepath"
-    "github.com/gorilla/websocket"
     "fmt"
+
+    "github.com/gorilla/websocket"
 )
 
 var (
@@ -19,10 +23,18 @@ func LaunchServerForGodot(){
 }
 
 
+type EmoteJSON struct {
+        User string
+        // 上のurlとidは同じindexで対応
+        EmoteUrl []string
+        EmoteId []string
+}
+
+
 
 // godotとwebsocketの通信。
 func godot_wsEndpoint(w http.ResponseWriter, r *http.Request) {
-    fmt.Println("viewEmoteHandler")
+    log.Println("godot_wsendpoint create")
     var upgrader = websocket.Upgrader{
         ReadBufferSize: 1024,
         WriteBufferSize: 1024,
@@ -40,7 +52,7 @@ func godot_wsEndpoint(w http.ResponseWriter, r *http.Request) {
     defer wsgo.Close()
 
 
-    log.Println("Client Connected")
+    log.Println("godot Client Connected")
     err = wsgo.WriteMessage(1, []byte("Hi Client!"))
     if err != nil{
         log.Println(err)
@@ -48,6 +60,31 @@ func godot_wsEndpoint(w http.ResponseWriter, r *http.Request) {
 
 
     godot_communication(wsgo)
+}
+
+func testEmote() {
+        testEmoteArray := []string{
+            "https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_dad5dd0bf0484a9185f3019fd332baa3/animated/light/4.0", 
+            "https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_35dbfad152f8403dbfa7197d095cb960/static/light/4.0",
+        }
+        testEmoteIdArray := []string{
+            "yunivoMunimuniL",
+            "x37nuiStar",
+        }
+
+        testEmote := EmoteJSON{
+            User: "test",
+            EmoteUrl: testEmoteArray,
+            EmoteId: testEmoteIdArray,
+        }
+
+        data := map[string]string {"user": testEmote.User, "emote_url": strings.Join(testEmote.EmoteUrl, ","), "emote_id": strings.Join(testEmote.EmoteId, ",")}
+
+
+        if err := gows.WriteJSON(data); err != nil {
+            log.Println(err)
+            return
+        }
 }
 
 
@@ -61,72 +98,52 @@ func godot_communication(conn *websocket.Conn){
             return
         }
         // print out that message
-        fmt.Println(string(p))
+        log.Println("from godot " + string(p))
 
-
-        emoteUrl := GetEmoteUrl()
-        p = []byte(emoteUrl)
+        // testEmote()
 
 
         if err := conn.WriteMessage(messageType, p); err != nil {
             log.Println(err)
             return
         }
-
     }
-
 }
-
-
-
-
-// godotにEmoteとuser名を乗っけたjsonを送る
-func sendEmoteUrlToGodot(ws *websocket.Conn, user string){
-    err := ws.WriteJSON(map[string]string {"user": user, "emote_url": GetEmoteUrl()})
-    if err != nil{
-        log.Println(err)
-    }
-
-}
-
-
-func sendEmoteTVUrlToGodot(ws *websocket.Conn, user string){
-    err := ws.WriteJSON(map[string]string {"user": user, "emote_url": GetEmoteTVUrl()})
-    if err != nil{
-        log.Println(err)
-    }
-
-}
-
-func sendEmote7TVUrlToGodot(ws *websocket.Conn, user string){
-    err := ws.WriteJSON(map[string]string {"user": user, "emote_url": GetEmote7TVUrl()})
-    if err != nil{
-        log.Println(err)
-    }
-
-}
-
-
 
 // godotにmessageを乗っけたjsonを送る
 func MsgNotifyforGodot(user, msg string){
-    err := gows.WriteJSON(map[string]string {"user": user, "msg": msg})
-    if err != nil{
-        log.Println(err)
+    if gows != nil{
+        err := gows.WriteJSON(map[string]string {"user": user, "msg": msg})
+        if err != nil{
+            log.Println(err)
+        }
     }
 }
 
 func EmoteNotifyforGodot(user string){
-    // TODO: ここをarrayで送れるようにする
-    err := gows.WriteJSON(map[string]string {"user": user, "emote_url": GetEmoteUrl()})
-    if err != nil{
-        log.Println(err)
+    emoteJSON := EmoteJSON{
+        User: user,
+        EmoteUrl: GetEmoteUrl(),
     }
+
+    data := map[string]string {"user": emoteJSON.user , "emote_url": strings.Join(emoteJSON.emote_url, ",")}
+    // data := map[string]string {"user": testEmote.User, "emote_url": strings.Join(testEmote.EmoteUrl, ","), "emote_id": strings.Join(testEmote.EmoteId, ",")}
+    
+    if gows != nil{
+        err := gows.WriteJSON(data)
+        if err != nil{
+            log.Println(err)
+        }
+    }
+
+    fmt.Println("emoteJSON:", emoteJSON)
 }
 
 func HydrateNotifyforGodot(user string){
-    err := gows.WriteJSON(map[string]string {"user": user, "hydrate": "hydrate"})
-    if err != nil{
-        log.Println(err)
+    if gows != nil{
+        err := gows.WriteJSON(map[string]string {"user": user, "hydrate": "hydrate"})
+        if err != nil{
+            log.Println(err)
+        }
     }
 }

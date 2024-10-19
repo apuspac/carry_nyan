@@ -58,7 +58,7 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 
 // emoteのURLを送信
 func sendEmoteMessage(ws *websocket.Conn){
-    err := ws.WriteMessage(1, []byte(GetEmoteUrl()))
+    err := ws.WriteMessage(1, []byte(GetEmoteUrl()[0]))
     if err != nil{
         log.Println(err)
     }
@@ -78,7 +78,7 @@ func websocket_wait(conn *websocket.Conn){
         fmt.Println(string(p))
 
 
-        emoteUrl := GetEmoteUrl()
+        emoteUrl := GetEmoteUrl()[0]
         p = []byte(emoteUrl)
 
 
@@ -106,7 +106,7 @@ func viewEmoteHandler(w http.ResponseWriter, r *http.Request) {
 
     // ここで、?url=を取得してて、
     // emoteUrl := r.URL.Query().Get("url")
-    emoteUrl := GetEmoteUrl()
+    emoteUrl := GetEmoteUrl()[0]
     if emoteUrl == "" {
         http.Error(w, "Missing image parameter", http.StatusBadRequest)
         return

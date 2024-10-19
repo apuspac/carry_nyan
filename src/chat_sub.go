@@ -186,7 +186,7 @@ func createSubscription(ws *websocket.Conn, streamToken *StreamToken, event_sub_
         return fmt.Errorf("failed to create subscription, status code: %d", resp.StatusCode)
     }
 
-    log.Println("Subscription created successfully")
+    log.Println(event_sub_type + ": Subscription created successfully")
 
     return nil
 }
@@ -205,7 +205,7 @@ func chatCommand(ws *websocket.Conn, streamToken *StreamToken, msg string) {
 }
 
 // jsonファイルから読みだして、emoteのURLをsetする
-func loadEmoteData(received ChatMessageEvent, frg_index int) {
+func loadEmoteData(received *ChatMessageEvent, frg_index int) {
     MessageFragment := received.Message.Fragments[frg_index]
     fmt.Println(MessageFragment.Emote.Id)
     fmt.Println(MessageFragment.Emote.Format[0])
@@ -219,11 +219,13 @@ func loadEmoteData(received ChatMessageEvent, frg_index int) {
         format = "static"
     }
     SetEmoteUrl(id, format, "twitch")
+
+    // emoteの文字列削除
 }
 
 // subscriptionを確立させる
 func handleSessionWelcome(ws *websocket.Conn, streamToken *StreamToken) {
-    fmt.Println("Received Session Welcome")
+    log.Println("Received Session Welcome from Twitch")
     createSubscription(ws, streamToken, "channel.chat.message")
     createSubscription(ws, streamToken, "channel.channel_points_custom_reward_redemption.add")
 }
@@ -241,12 +243,18 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
         json.Unmarshal(eventData, &rcv_event)
         fmt.Println(rcv_event.ChatterUserName, ": ", rcv_event.Message.Text)
 
+        if rcv_event.Message.Text[0:1] == "!"{
+            chatCommand(ws, streamToken, rcv_event.Message.Text)
+        }
+
         // messageの中のemoteの分だけ、loadEmoteDataを呼び出す。
         // emoteがないときは、すっとばされる。
         for index, msg_frag := range rcv_event.Message.Fragments {
             if msg_frag.Type == "emote" {
-                loadEmoteData(rcv_event, index)
-                EmoteNotifyforGodot(rcv_event.ChatterUserName, rcv_event.Message.Text)
+                loadEmoteData(&rcv_event, index)
+                // EmoteNotifyforGodot(rcv_event.ChatterUserName)
+
+                rcv_event.Message.Text = strings.Replace(rcv_event.Message.Text, msg_frag.Text, "", 1)
             }
         }
 
@@ -254,9 +262,11 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
         for code, id:= range Replace_emote_list_ttv {
             if strings.Contains(rcv_event.Message.Text, code) {
                 fmt.Println("Replace Emote: " + id)
-                SetTVEmoteUrl(id)
-                SetEmoteUrl(id, "static", "betterttv")
-                TVEmoteNotifyforGodot(rcv_event.ChatterUserName, rcv_event.Message.Text)
+
+
+                for range(strings.Count(rcv_event.Message.Text, code)) {
+                    SetEmoteUrl(id, "static", "betterttv")
+                }
 
                 rcv_event.Message.Text = strings.ReplaceAll(rcv_event.Message.Text, code, "")
             }
@@ -266,27 +276,27 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
             if strings.Contains(rcv_event.Message.Text, code) {
                 fmt.Println("Replace Emote: " + id)
 
-                Set7TVEmoteUrl(id)
-                SetEmoteUrl(id, "static", "7tv")
-                TV7EmoteNotifyforGodot(rcv_event.ChatterUserName)
+                for range(strings.Count(rcv_event.Message.Text, code)) {
+                    SetEmoteUrl(id, "static", "7tv")
+                }
 
                 rcv_event.Message.Text = strings.ReplaceAll(rcv_event.Message.Text, code, "")
             }
         }
-        
-        if len(rcv_event.Message.Text) == 0 {
-            break
+
+
+        if len(rcv_event.Message.Text) != 0 {
+            // godotなどに送信
+            MsgNotifyforGodot(rcv_event.ChatterUserName, rcv_event.Message.Text)
         }
 
-        // godotなどに送信
-        MsgNotifyforGodot(rcv_event.ChatterUserName, rcv_event.Message.Text)
-        EmoteNotifyforGodot(rcv_event.ChatterUserName)
+
+        if len(EmoteArray) != 0 {
+            EmoteNotifyforGodot(rcv_event.ChatterUserName)
+        }
+
         ClearEmoteArray()
 
-
-        if rcv_event.Message.Text[0:1] == "!"{
-            chatCommand(ws, streamToken, rcv_event.Message.Text)
-        }
 
     // channel points引き換え
     case "channel.channel_points_custom_reward_redemption.add":
@@ -386,7 +396,6 @@ func main() {
     GetListBetterttvGlobal()
     GetListBetterttvUser()
     GetList7tvEmoteSets()
-    GetEmote7TVUrl()
 
     // mainが終了されたら、実行される。
     defer ws.Close()
