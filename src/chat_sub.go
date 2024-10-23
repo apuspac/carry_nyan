@@ -11,6 +11,8 @@ import (
     // "time"
     // "io/ioutil"
 
+    "regexp"
+
     "github.com/gorilla/websocket"
 )
 
@@ -260,8 +262,10 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
 
         // check betterttv emote
         for _, ttv_emote:= range Replace_emote_list_ttv {
-            if strings.Contains(rcv_event.Message.Text, ttv_emote.Code) {
-                fmt.Println("Replace Emote: " + ttv_emote.Id)
+            re := regexp.MustCompile(fmt.Sprintf(`\b%s\b`, regexp.QuoteMeta(ttv_emote.Code)))
+            if re.MatchString(rcv_event.Message.Text){
+            // if strings.Contains(rcv_event.Message.Text, ttv_emote.Code) {
+            fmt.Println("Replace Emote: " + ttv_emote.Id, "Code: " + ttv_emote.Code)
 
 
                 for range(strings.Count(rcv_event.Message.Text, ttv_emote.Code)) {
@@ -270,13 +274,18 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
                     SetEmoteUrl(ttv_emote.Id, format, "betterttv", ttv_emote.Code)
                 }
 
-                rcv_event.Message.Text = strings.ReplaceAll(rcv_event.Message.Text, ttv_emote.Code, "")
+                // rcv_event.Message.Text = strings.ReplaceAll(rcv_event.Message.Text, ttv_emote.Code, "")
+                rcv_event.Message.Text = re.ReplaceAllString(rcv_event.Message.Text, "")
             }
         }
 
         for _, tv7_emote := range Replace_emote_list_7tv {
-            if strings.Contains(rcv_event.Message.Text, tv7_emote.Code) {
-                fmt.Println("Replace Emote: " + tv7_emote.Id)
+            // emote文字列をreで検索するためにあらかじめcompile
+            re := regexp.MustCompile(fmt.Sprintf(`\b%s\b`, regexp.QuoteMeta(tv7_emote.Code)))
+            if re.MatchString(rcv_event.Message.Text){
+            // if strings.Contains(rcv_event.Message.Text, tv7_emote.Code) {
+                // fmt.Println("Replace Emote: " + tv7_emote.Id)
+                fmt.Println("Replace Emote: " + tv7_emote.Id, "Code: " + tv7_emote.Code)
 
                 for range(strings.Count(rcv_event.Message.Text, tv7_emote.Code)) {
                     var format = "static"
@@ -284,7 +293,8 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
                     SetEmoteUrl(tv7_emote.Id, format, "7tv", tv7_emote.Code)
                 }
 
-                rcv_event.Message.Text = strings.ReplaceAll(rcv_event.Message.Text, tv7_emote.Code, "")
+                // rcv_event.Message.Text = strings.ReplaceAll(rcv_event.Message.Text, tv7_emote.Code, "")
+                rcv_event.Message.Text = re.ReplaceAllString(rcv_event.Message.Text, "")
             }
         }
 
