@@ -1,0 +1,3 @@
+betterttv_user_id: 139776244
+tv7_user_id: 6676d128ca58f5151ecd3b7e
+tv7_emote_set_id: 6676d198180087fd48c2a128
