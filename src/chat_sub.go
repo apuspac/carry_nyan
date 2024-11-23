@@ -12,6 +12,7 @@ import (
     // "io/ioutil"
 
     "regexp"
+    "unicode"
 
     "github.com/gorilla/websocket"
 )
@@ -52,6 +53,7 @@ type Session struct {
     Status                 string      `json:"status"`
     ConnectedAt            string      `json:"connected_at"`
     KeepaliveTimeoutSeconds int       `json:"keepalive_timeout_seconds"`
+    //これが あまり良くないらしい。
     ReconnectURL           interface{} `json:"reconnect_url"` // これはnull値が来る可能性があるためinterface{}にします
     RecoveryURL            interface{} `json:"recovery_url"`  // これもnull値が来る可能性があるためinterface{}にします
 }
@@ -116,6 +118,15 @@ type CustomRewardRedemptionAddEvent struct {
 
     }`json:"reward"`
     RedeemedAt    string `json:"redeemed_at"`
+}
+
+func IsAllSpace(s string) bool {
+    for _, r := range s {
+        if !unicode.IsSpace(r) {
+            return false
+        }
+    }
+    return true
 }
 
 
@@ -198,11 +209,19 @@ func createSubscription(ws *websocket.Conn, streamToken *StreamToken, event_sub_
 func chatCommand(ws *websocket.Conn, streamToken *StreamToken, msg string) {
     if msg == "!nya" {
         SendMessage(streamToken, "にゃーん")
-        GetChatters(streamToken)
+        // GetChatters(streamToken)
     }
     if msg == "!dis" {
         SendAnnouncementes(streamToken, "https://discord.gg/HZwVQXPPwM", "blue")
     }
+    if msg == "!ocha" {
+        SendMessage(streamToken, "~(=^･ω･^)_旦")
+    }
+
+    if msg == "!nyan" {
+        SendMessage(streamToken, "▒▒▒▒▒█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█ ▒▒▒▒▒█░▒▒▒▒▒▒▓▒▓▒▒▒▒▒▒▒░█ ▒▒▒▒▒█░▒▒▓▒▒▒▒▒▒▒▄▄▒▓▒▒░█░▄▄ ▄▀▀▄▄█░▒▒▒▒▒▒▓▒▒█░░▀▄▄▄▄▄▀░░█ █░░░░█░▒▒▒▒▒▒▒▒▒█░░░░░░░░░░░█ ▒▀▀▄▄█░▒▒▒▓▒▒▓▒█░░░█░░░░░█░░░█ ▒▒▒▒▒█░▒▓▒▒▒▓▒▒█░░░░░░░▀░░░░░█ ▒▒▒▄▄█░▒▒▒▓▒▒▒▒▒█░░█▄▄█▄▄█░░█ ▒▒█░░░█▄▄▄▄▄▄▄▄█░█▄▄▄▄▄▄▄▄▄█ ▒▒▒█▄▄█░░█▄▄█░░░░█▄▄█░░█▄▄")
+    }
+
 
 }
 
@@ -254,8 +273,6 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
         for index, msg_frag := range rcv_event.Message.Fragments {
             if msg_frag.Type == "emote" {
                 loadEmoteData(&rcv_event, index)
-                // EmoteNotifyforGodot(rcv_event.ChatterUserName)
-
                 rcv_event.Message.Text = strings.Replace(rcv_event.Message.Text, msg_frag.Text, "", 1)
             }
         }
@@ -299,8 +316,7 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
         }
 
 
-        if len(rcv_event.Message.Text) != 0 {
-            // godotなどに送信
+        if len(rcv_event.Message.Text) != 0 && IsAllSpace(rcv_event.Message.Text) == false{
             MsgNotifyforGodot(rcv_event.ChatterUserName, rcv_event.Message.Text)
         }
 
@@ -319,7 +335,6 @@ func handleNotification(ws *websocket.Conn, received Received, streamToken *Stre
         eventData, _ := json.Marshal(received.Payload.Event)
         json.Unmarshal(eventData, &rcv_event)
 
-        // まだ、printするだけ。
         fmt.Println(rcv_event)
 
         switch rcv_event.Reward.Title {
@@ -394,23 +409,25 @@ func listenForMessages(ws *websocket.Conn, streamToken *StreamToken) {
 
 
 
+
 func main() {
 
     filePath := "config/config.txt"
     streamToken := setStreamToken(filePath)
 
     // GetChatters(&streamToken)
-    
+
+    // getemote list 
+    emoteFilePath := "config/config_emote.txt"
+    LoadExtentionEmotesList(emoteFilePath)
+
+
+
     ws, _, err := websocket.DefaultDialer.Dial(wsUrl, http.Header{})
     if err != nil {
         log.Fatal(err)
     }
 
-    // getemote list 
-    GetListBetterttvGlobal()
-    GetListBetterttvUser()
-    GetList7tvEmoteSets()
-    GetList7tvEmoteSetsGlobal()
 
     // mainが終了されたら、実行される。
     defer ws.Close()

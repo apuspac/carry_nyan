@@ -7,6 +7,48 @@ import (
     "strings"
 )
 
+func LoadEmoteFile(filePath string) map[string]string{
+    // 読み込むファイルのパス
+
+    var config map[string]string = make(map[string]string)
+    var tmp [3]string
+
+    // ファイルを開く
+    file, err := os.Open(filePath)
+    if err != nil {
+        fmt.Println("エラー:", err)
+    }
+    defer file.Close()
+
+    // スキャナを使ってファイルを読み込む
+    scanner := bufio.NewScanner(file)
+    i := 0
+    for scanner.Scan() {
+        // 1行ずつ読み込む
+        line := scanner.Text()
+
+        fields := strings.Fields(line)
+
+        if len(fields) >= 2 {
+            tmp[i] = fields[1]
+        } else {
+            fmt.Println("2つ目のフィールドが存在しません")
+        }
+
+        i++
+    }
+
+    // エラーがあった場合
+    if err := scanner.Err(); err != nil {
+        fmt.Println("エラー:", err)
+    }
+
+    config["betterttv_user_id"] = tmp[0]
+    config["tv7_user_id"] = tmp[1]
+    config["tv7_emote_set_id"] = tmp[2]
+
+    return config
+}
 
 func Load_file(filePath string) map[string]string{
     // 読み込むファイルのパス

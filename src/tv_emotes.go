@@ -67,12 +67,34 @@ type NonTwitchEmote struct {
 
 var (
     // おい ここに書くんじゃありません。
-    betterttv_user_id string = "139776244"
-    tv7_user_id string = "6676d128ca58f5151ecd3b7e"
-    tv7_emote_set_id string = "6676d198180087fd48c2a128"
+    betterttv_user_id string
+    tv7_user_id string
+    tv7_emote_set_id string
     Replace_emote_list_ttv []NonTwitchEmote
     Replace_emote_list_7tv []NonTwitchEmote
 )
+
+
+func LoadExtentionEmotesList(s string) {
+    setExtentionEmotesID(s)
+
+    getListBetterttvGlobal()
+    getListBetterttvUser()
+    getList7tvEmoteSets()
+    getList7tvEmoteSetsGlobal()
+
+
+}
+
+func setExtentionEmotesID(filePath string){
+    var config map[string]string = make(map[string]string)
+    config = LoadEmoteFile(filePath)
+
+    betterttv_user_id = config["betterttv_user_id"]
+    tv7_user_id = config["tv7_user_id"]
+    tv7_emote_set_id = config["tv7_emote_set_id"]
+}
+
 
 
 func http_request_GET(url string, return_body *[]byte) error{
@@ -118,7 +140,7 @@ func Get7tvEmoteWebp (emote_url string, webpbyte *[]byte) {
 
 
 
-func GetList7tvEmoteSetsGlobal() {
+func getList7tvEmoteSetsGlobal() {
     url := "https://7tv.io/v3/emote-sets/global"
 
     var body []byte
@@ -135,7 +157,7 @@ func GetList7tvEmoteSetsGlobal() {
 }
 
 
-func GetList7tvEmoteSets() {
+func getList7tvEmoteSets() {
     url := "https://7tv.io/v3/emote-sets/" + tv7_emote_set_id
 
     var body []byte
@@ -151,7 +173,7 @@ func GetList7tvEmoteSets() {
     }
 }
 
-func GetListBetterttvUser() {
+func getListBetterttvUser() {
     url := "https://api.betterttv.net/3/cached/users/twitch/" + betterttv_user_id
 
     var body []byte
@@ -172,7 +194,7 @@ func GetListBetterttvUser() {
 }
 
 
-func GetListBetterttvGlobal() {
+func getListBetterttvGlobal() {
     url := "https://api.betterttv.net/3/cached/emotes/global"
 
     var body []byte
